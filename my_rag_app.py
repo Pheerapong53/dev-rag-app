@@ -32,8 +32,9 @@ def save_uploaded_file(uploaded_file):
     return file_path
 
 uploaded_file = st.file_uploader("Choose a PDF file", type=["pdf"])
-pdf_path = save_uploaded_file(uploaded_file) if uploaded_file else None
+# pdf_path = save_uploaded_file(uploaded_file) if uploaded_file else None
 
+pdf_path = "sample.pdf"
 # Load PDF, Split into Chunks, and Store in Vector DB
 def load_pdf_data(file, chunk_size=500, chunk_overlap=50):
     loader = PyPDFLoader(file)
