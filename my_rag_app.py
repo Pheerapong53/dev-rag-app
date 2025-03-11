@@ -5,6 +5,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_google_genai import GoogleGenerativeAI
+from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 
 # Set up Streamlit UI
@@ -50,8 +51,30 @@ def create_vector_store(documents):
 # Setup QA System
 def setup_qa_system(vector_store, temperature):
     llm = GoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=temperature, google_api_key=google_api_key)
-    retriever = vector_store.as_retriever()
-    return RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
+    prompt_template = """คุณเป็นผู้ช่วยที่เชี่ยวชาญในการตอบคำถามจากเอกสาร
+    
+    โปรดใช้ข้อมูลต่อไปนี้เพื่อตอบคำถาม:
+    {context}
+    
+    คำถาม: {question}
+    
+    โปรดตอบโดยละเอียดและชัดเจน พร้อมอ้างอิงข้อมูลจากเอกสาร:"""
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        retriever=vector_store.as_retriever(),
+        return_source_documents=True,
+        chain_type="stuff",  # หรือใช้ "map_reduce" สำหรับเอกสารยาวๆ
+        chain_type_kwargs={
+            "prompt": PromptTemplate(
+                template=prompt_template,
+                input_variables=["context", "question"]
+            ),
+        }
+    )
+    return qa_chain
+
+    # retriever = vector_store.as_retriever()
+    # return RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
 # Store chat history
 if "chat_history" not in st.session_state:
